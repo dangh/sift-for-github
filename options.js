@@ -1,6 +1,8 @@
 let tabsEl = document.getElementById('tabs');
 let defaultEl = document.getElementById('default');
 let statusEl = document.getElementById('status');
+let onDemandEl = document.getElementById('on-demand');
+let parallelEl = document.getElementById('parallel');
 
 function addTab(tab) {
   let box = document.createElement('div');
@@ -53,7 +55,8 @@ function show(config) {
     addTab(tab);
   }
   refreshDefaults(config.defaultTab || '');
-  document.getElementById('on-demand').checked = config.experiments?.onDemandDiffs !== false;
+  onDemandEl.checked = config.experiments.onDemandDiffs;
+  parallelEl.checked = config.experiments.parallelLoad;
 }
 
 function read() {
@@ -65,7 +68,7 @@ function read() {
       tabs.push({ label, patterns });
     }
   }
-  let experiments = { onDemandDiffs: document.getElementById('on-demand').checked };
+  let experiments = { onDemandDiffs: onDemandEl.checked, parallelLoad: parallelEl.checked };
   return { tabs, defaultTab: defaultEl.value, experiments };
 }
 

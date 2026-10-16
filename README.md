@@ -23,6 +23,24 @@ One pattern per line; a tab shows a file when any pattern matches.
 - `!Metadata` excludes files that belong to the tab labelled Metadata; `!*.md` excludes
   files matching a pattern. A tab with only `!` lines starts from every file.
 
+## Experiments
+
+Both are on by default and can be turned off in the options page.
+
+- **Load diffs on demand**. When a PR opens on a tab other than All, a page script
+  (`page.js`) switches GitHub to the virtualized list it uses for very large PRs, which
+  only fetches diffs near the viewport, and hands GitHub's diff store just the open tab's
+  files. Files in other tabs aren't fetched until you show them, and switching tabs needs
+  no reload. Trade-offs: Find on Page only sees diffs near the screen, and GitHub's own
+  file tree and "viewed" counter show the open tab's files. It reaches GitHub's store
+  through React internals; if those change it does nothing and tabs fall back to hiding
+  files with CSS.
+- **Parallel diff loading**. GitHub fetches diff contents 4 files per
+  request, one request at a time, so a 160-file PR takes 30 s or more to fill in. A page
+  script (`prefetch.js`) wraps `fetch`, loads the same batches with about 5 requests in
+  flight, and answers GitHub's queued requests from them. Any batch that fails falls back
+  to GitHub's own request. It stays out of the way while the on-demand list is in use.
+
 ## Notes
 
 - Reads the file list GitHub embeds in the page, so counts are complete on load and files

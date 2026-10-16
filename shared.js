@@ -3,10 +3,6 @@ var GHPT = (function () {
   const DEFAULTS = {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
-    experiments: {
-      // Use GitHub's virtualized diff list when a PR opens on a tab other than All.
-      onDemandDiffs: true
-    },
     tabs: [
       { label: 'Source', patterns: ['!Metadata', '!Tests'] },
       { label: 'Tests', patterns: ['/test/i'] },
@@ -19,7 +15,13 @@ var GHPT = (function () {
           'composer.json', 'composer.lock', 'pom.xml', 'build.gradle', 'build.gradle.kts'
         ]
       }
-    ]
+    ],
+    experiments: {
+      // Use GitHub's virtualized diff list when a PR opens on a tab other than All (page.js).
+      onDemandDiffs: true,
+      // Fetch diff contents in parallel instead of GitHub's one request at a time (prefetch.js).
+      parallelLoad: true
+    }
   };
 
   // Pattern syntax: "/regex/flags" tests the full path. Otherwise a glob where * is any

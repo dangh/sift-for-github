@@ -47,6 +47,14 @@
     which loads diffs as you scroll to them instead of fetching every file first. Files in other
     tabs are skipped until you show them. Trade-off: Find on Page only sees diffs near the screen.
   </p>
+  <div class="row">
+    <label><input id="parallel" type="checkbox"> Parallel diff loading</label>
+  </div>
+  <p class="hint">
+    When GitHub does fetch every file (a PR opened on All, or with the option above off), fetch
+    them in parallel instead of one request at a time and hand them to GitHub as it asks.
+  </p>
+  <p class="hint">Experiments take effect on the next page load.</p>
 
   <div class="actions">
     <button id="save" type="button"><b>Save</b></button>
