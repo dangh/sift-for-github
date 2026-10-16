@@ -38,6 +38,16 @@
   </div>
   <p class="hint">The tab you pick on a PR is remembered for that PR across refreshes. This only applies to PRs you open fresh.</p>
 
+  <h2 style="font-size:16px; margin-top:24px">Experiments</h2>
+  <div class="row">
+    <label><input id="on-demand" type="checkbox"> Load diffs on demand</label>
+  </div>
+  <p class="hint">
+    When a PR opens on a tab other than All, switch GitHub to the list it uses for very large PRs,
+    which loads diffs as you scroll to them instead of fetching every file first. Files in other
+    tabs are skipped until you show them. Trade-off: Find on Page only sees diffs near the screen.
+  </p>
+
   <div class="actions">
     <button id="save" type="button"><b>Save</b></button>
     <button id="reset" type="button">Reset to defaults</button>

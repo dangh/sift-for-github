@@ -1,8 +1,12 @@
-// Loaded by both the content script and the options page.
+// Loaded by the content script, the page script and the options page.
 var GHPT = (function () {
   const DEFAULTS = {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
+    experiments: {
+      // Use GitHub's virtualized diff list when a PR opens on a tab other than All.
+      onDemandDiffs: true
+    },
     tabs: [
       { label: 'Source', patterns: ['!Metadata', '!Tests'] },
       { label: 'Tests', patterns: ['/test/i'] },
@@ -118,8 +122,55 @@ var GHPT = (function () {
       config = { ...config, tabs: [...config.tabs, { label: config.fallbackLabel, patterns: rest }] };
       delete config.fallbackLabel;
     }
-    return config;
+    // Saved configs predating an experiment get its default.
+    return { ...config, experiments: { ...DEFAULTS.experiments, ...config.experiments } };
   }
 
-  return { DEFAULTS, compile, compileConfig, classify, load };
+  // "owner/repo#123" for a PR page path, '' elsewhere.
+  function prKey(pathname) {
+    let match = pathname.match(/^\/([^/]+\/[^/]+)\/pull\/(\d+)/);
+    if (!match) {
+      return '';
+    }
+    return match[1] + '#' + match[2];
+  }
+
+  function tabList(config) {
+    let list = [{ key: 'all', label: 'All' }];
+    for (let [index, tab] of config.tabs.entries()) {
+      list.push({ key: String(index), label: tab.label });
+    }
+    return list;
+  }
+
+  // The tab picked on a PR survives a refresh (sessionStorage); a PR opened fresh uses the default.
+  function readSaved(pr) {
+    try {
+      return sessionStorage.getItem('ghpt:' + pr);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function keyForLabel(tabs, label) {
+    let tab = tabs.find((t) => t.key !== 'all' && t.label === label);
+    return tab?.key;
+  }
+
+  function initialKey(config, pr) {
+    let tabs = tabList(config);
+    let saved = readSaved(pr);
+    if (saved === 'all') {
+      return 'all';
+    }
+    if (saved?.startsWith('tab:')) {
+      let key = keyForLabel(tabs, saved.slice(4));
+      if (key) {
+        return key;
+      }
+    }
+    return keyForLabel(tabs, config.defaultTab) || 'all';
+  }
+
+  return { DEFAULTS, compile, compileConfig, classify, load, prKey, tabList, initialKey };
 })();

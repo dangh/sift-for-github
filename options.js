@@ -53,6 +53,7 @@ function show(config) {
     addTab(tab);
   }
   refreshDefaults(config.defaultTab || '');
+  document.getElementById('on-demand').checked = config.experiments?.onDemandDiffs !== false;
 }
 
 function read() {
@@ -64,7 +65,8 @@ function read() {
       tabs.push({ label, patterns });
     }
   }
-  return { tabs, defaultTab: defaultEl.value };
+  let experiments = { onDemandDiffs: document.getElementById('on-demand').checked };
+  return { tabs, defaultTab: defaultEl.value, experiments };
 }
 
 function flash(text) {

@@ -7,20 +7,7 @@
   let timer = null;
 
   function prKey() {
-    let match = location.pathname.match(/^\/([^/]+\/[^/]+)\/pull\/(\d+)/);
-    if (!match) {
-      return '';
-    }
-    return match[1] + '#' + match[2];
-  }
-
-  // The tab picked on a PR survives a refresh (sessionStorage); a PR opened fresh uses the default.
-  function readSaved(pr) {
-    try {
-      return sessionStorage.getItem('ghpt:' + pr);
-    } catch (e) {
-      return null;
-    }
+    return GHPT.prKey(location.pathname);
   }
 
   function saveChoice(pr, tabs, key) {
@@ -36,31 +23,17 @@
     }
   }
 
-  function keyForLabel(tabs, label) {
-    let tab = tabs.find((t) => t.key !== 'all' && t.label === label);
-    return tab?.key;
-  }
-
-  function initialKey(pr, tabs) {
-    let saved = readSaved(pr);
-    if (saved === 'all') {
-      return 'all';
-    }
-    if (saved?.startsWith('tab:')) {
-      let key = keyForLabel(tabs, saved.slice(4));
-      if (key) {
-        return key;
-      }
-    }
-    return keyForLabel(tabs, config.defaultTab) || 'all';
-  }
-
   function tabList() {
-    let list = [{ key: 'all', label: 'All' }];
-    for (let [index, tab] of config.tabs.entries()) {
-      list.push({ key: String(index), label: tab.label });
+    return GHPT.tabList(config);
+  }
+
+  // page.js runs before chrome.storage can answer and can't reach it anyway, so it reads this copy.
+  function shareConfig() {
+    try {
+      localStorage.setItem('ghpt:config', JSON.stringify(config));
+    } catch (e) {
+      // storage unavailable; page.js then leaves GitHub's loading alone
     }
-    return list;
   }
 
   function pathOf(container) {
@@ -97,7 +70,8 @@
   // wrapper has to be hidden too. Walk up while the parent holds only this one child.
   function slotOf(el) {
     let slot = el;
-    while (slot.parentElement && slot.parentElement.children.length === 1 && slot.parentElement.tagName === 'DIV') {
+    // A virtualized row (data-index) is the outermost per-file wrapper; its parent is the list.
+    while (!slot.hasAttribute('data-index') && slot.parentElement && slot.parentElement.children.length === 1 && slot.parentElement.tagName === 'DIV') {
       slot = slot.parentElement;
     }
     return slot;
@@ -213,6 +187,7 @@
     if (!onFilesPage()) {
       bar?.remove();
       document.getElementById('ghpt-filter')?.remove();
+      delete document.documentElement.dataset.ghptActive;
       return;
     }
 
@@ -231,10 +206,14 @@
     let pr = prKey();
     if (activeFor !== pr) {
       activeFor = pr;
-      active = initialKey(pr, tabs);
+      active = GHPT.initialKey(config, pr);
     }
     if (!tabs.some((t) => t.key === active)) {
       active = 'all';
+    }
+    // page.js watches this to hand GitHub only the open tab's files.
+    if (document.documentElement.dataset.ghptActive !== active) {
+      document.documentElement.dataset.ghptActive = active;
     }
 
     let files = [];
@@ -262,14 +241,22 @@
         counts[String(index)] += 1;
       }
     }
+    let hide = new Set();
     for (let el of containers) {
       let held = bucketByDiffId.get(el.id);
-      let slot = slotOf(el);
       if (active !== 'all' && !held.has(Number(active))) {
-        slot.dataset.ghptHidden = '1';
-      } else {
-        delete slot.dataset.ghptHidden;
+        hide.add(slotOf(el));
       }
+    }
+    // A wrapper that held a single hidden diff can later hold more (GitHub's virtualized list
+    // reuses its row container), so drop every mark this pass doesn't set again.
+    for (let el of document.querySelectorAll('[data-ghpt-hidden]:not(li[role="treeitem"])')) {
+      if (!hide.has(el)) {
+        delete el.dataset.ghptHidden;
+      }
+    }
+    for (let slot of hide) {
+      slot.dataset.ghptHidden = '1';
     }
     if (summary) {
       writeFilterStyle(files, bucketByDiffId);
@@ -386,6 +373,7 @@
     if (changes.config) {
       config = await GHPT.load();
       compiled = GHPT.compileConfig(config);
+      shareConfig();
       render();
     }
   });
@@ -393,6 +381,7 @@
   GHPT.load().then(function (loaded) {
     config = loaded;
     compiled = GHPT.compileConfig(config);
+    shareConfig();
     ready = true;
     render();
   });
