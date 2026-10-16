@@ -38,6 +38,14 @@
   </div>
   <p class="hint">The tab you pick on a PR is remembered for that PR across refreshes. This only applies to PRs you open fresh.</p>
 
+  <h2 style="font-size:16px; margin-top:24px">Experiments</h2>
+  <div class="row">
+    <input id="parallel" type="checkbox">
+    <label for="parallel">Parallel diff loading</label>
+  </div>
+  <p class="hint">GitHub loads diffs a few files at a time, one request after another, which takes a while on big PRs.
+    This fetches them in parallel and hands them to GitHub as it asks. Takes effect on the next page load.</p>
+
   <div class="actions">
     <button id="save" type="button"><b>Save</b></button>
     <button id="reset" type="button">Reset to defaults</button>

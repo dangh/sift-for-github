@@ -15,7 +15,11 @@ var GHPT = (function () {
           'composer.json', 'composer.lock', 'pom.xml', 'build.gradle', 'build.gradle.kts'
         ]
       }
-    ]
+    ],
+    experiments: {
+      // Fetch diff contents in parallel instead of GitHub's one request at a time (prefetch.js).
+      parallelLoad: true
+    }
   };
 
   // Pattern syntax: "/regex/flags" tests the full path. Otherwise a glob where * is any
@@ -118,7 +122,8 @@ var GHPT = (function () {
       config = { ...config, tabs: [...config.tabs, { label: config.fallbackLabel, patterns: rest }] };
       delete config.fallbackLabel;
     }
-    return config;
+    // Configs saved before an experiment existed get its default.
+    return { ...config, experiments: { ...DEFAULTS.experiments, ...config.experiments } };
   }
 
   return { DEFAULTS, compile, compileConfig, classify, load };

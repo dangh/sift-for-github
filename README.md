@@ -23,6 +23,14 @@ One pattern per line; a tab shows a file when any pattern matches.
 - `!Metadata` excludes files that belong to the tab labelled Metadata; `!*.md` excludes
   files matching a pattern. A tab with only `!` lines starts from every file.
 
+## Experiments
+
+- **Parallel diff loading** (on by default). GitHub fetches diff contents 4 files per
+  request, one request at a time, so a 160-file PR takes 30 s or more to fill in. A page
+  script (`prefetch.js`) wraps `fetch`, loads the same batches with about 5 requests in
+  flight, and answers GitHub's queued requests from them. Any batch that fails falls back
+  to GitHub's own request. Turn it off in the options page to get GitHub's default loading.
+
 ## Notes
 
 - Reads the file list GitHub embeds in the page, so counts are complete on load and files

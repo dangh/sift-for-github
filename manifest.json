@@ -1,11 +1,22 @@
 {
   "manifest_version": 3,
   "name": "PR Files Tabs",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Adds configurable tabs to the GitHub pull request Files changed view.",
   "permissions": ["storage"],
   "options_ui": { "page": "options.html", "open_in_tab": true },
   "content_scripts": [
+    {
+      "matches": ["https://github.com/*/*/pull/*"],
+      "js": ["prefetch.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://github.com/*/*/pull/*"],
+      "js": ["shared.js", "bridge.js"],
+      "run_at": "document_start"
+    },
     {
       "matches": ["https://github.com/*/*/pull/*"],
       "js": ["shared.js", "content.js"],

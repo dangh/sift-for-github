@@ -1,6 +1,7 @@
 let tabsEl = document.getElementById('tabs');
 let defaultEl = document.getElementById('default');
 let statusEl = document.getElementById('status');
+let parallelEl = document.getElementById('parallel');
 
 function addTab(tab) {
   let box = document.createElement('div');
@@ -53,6 +54,7 @@ function show(config) {
     addTab(tab);
   }
   refreshDefaults(config.defaultTab || '');
+  parallelEl.checked = config.experiments.parallelLoad;
 }
 
 function read() {
@@ -64,7 +66,7 @@ function read() {
       tabs.push({ label, patterns });
     }
   }
-  return { tabs, defaultTab: defaultEl.value };
+  return { tabs, defaultTab: defaultEl.value, experiments: { parallelLoad: parallelEl.checked } };
 }
 
 function flash(text) {
