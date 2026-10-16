@@ -41,6 +41,41 @@ Both are on by default and can be turned off in the options page.
   flight, and answers GitHub's queued requests from them. Any batch that fails falls back
   to GitHub's own request. It stays out of the way while the on-demand list is in use.
 
+How both work, and why: [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Benchmarks
+
+Measured 2026-10-16 on [react/react#37778](https://github.com/react/react/pull/37778/changes)
+(167 files, ~2,000 lines changed), headless Chrome, logged in. Times are from navigation
+start. GitHub itself takes about 4-5.7 s before its first diff request; neither experiment
+changes that part.
+
+**Opening on a tab** (Load diffs on demand). Diff requests GitHub makes. Before, it goes on
+to fetch all 167 files in 42 sequential requests (~30 s+) whatever the tab. After, counted
+when the tab was ready (for Metadata, also 3 s later):
+
+| Opening tab | Before | After |
+|---|---|---|
+| Metadata (3 files) | 42 | 2-5 |
+| Scripts (`scripts/*`, last in the list) | 42 | 2-3 |
+
+The first screen of the tab is ready at about the same time before and after (5-7 s),
+because GitHub already fetches on-screen diffs first. The saving is the ~160 diffs of
+other tabs that GitHub no longer fetches and renders in the background.
+
+**Switching tabs** after opening on Metadata, no reloads: Tests 1.9 s, All 0.33 s,
+Source 0.35 s, back to Metadata 0.33 s. 6 diff requests for the whole session.
+
+**Opening on All** (Parallel diff loading). Time until every file has its diff:
+
+| | Before | After |
+|---|---|---|
+| All 167 files loaded | 35-47 s | 11-15 s |
+| Requests in flight | 1 | ~5 |
+
+Diff contents were identical with the experiment on and off. Not measured yet: main-thread
+and memory cost, other PRs, and arriving at a PR from elsewhere on GitHub without a reload.
+
 ## Notes
 
 - Reads the file list GitHub embeds in the page, so counts are complete on load and files
